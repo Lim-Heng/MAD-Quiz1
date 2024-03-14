@@ -1,0 +1,8 @@
+<resources>
+    <string name="app_name">Quiz1</string>
+    <string name="add_story">Add story</string>
+    <string name="edit_profile">Edit Profile</string>
+    <string name="at">at </string>
+    <string name="see_info">See your About info</string>
+    <string name="edit_public_details">Edit public details</string>
+</resources>

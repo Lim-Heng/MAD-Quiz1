@@ -27,20 +27,17 @@ class MainActivity : AppCompatActivity() {
         viewModel.profileModelUiState.observe(this, Observer { uiState ->
             when (uiState.status) {
                 UiStateStatus.loading -> {
-                    // Show loading state
-
-                    // You can show a progress bar or any loading indicator here
+                    showLoading()
                 }
                 UiStateStatus.success -> {
-
                     // Data loaded successfully, update UI
+                    hideLoading()
                     displayProfile(uiState.data)
                 }
                 UiStateStatus.error -> {
                     // Handle error state
-
-                    // You can show an error message or retry option here
-
+                    hideLoading()
+                    showError(uiState.message ?: "Unknown error occurred.")
                 }
             }
         })
@@ -65,5 +62,29 @@ class MainActivity : AppCompatActivity() {
     override fun onDestroy() {
         super.onDestroy()
         _binding = null
+    }
+
+    private var loadingDialog: ProgressDialog? = null
+
+    private fun showLoading() {
+        if (loadingDialog == null) {
+            loadingDialog = ProgressDialog(this)
+            loadingDialog!!.setMessage("Loading...")
+            loadingDialog!!.setCancelable(false)
+            loadingDialog!!.show()
+        }
+    }
+
+    private fun hideLoading() {
+        loadingDialog?.dismiss()
+        loadingDialog = null
+    }
+
+    private fun showError(errorMessage: String) {
+        AlertDialog.Builder(this)
+            .setTitle("Error")
+            .setMessage(errorMessage)
+            .setPositiveButton("OK") { dialog, _ -> dialog.dismiss() }
+            .show()
     }
 }

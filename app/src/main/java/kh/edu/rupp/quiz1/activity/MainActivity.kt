@@ -1,57 +1,69 @@
-package kh.edu.rupp.quiz1.activity.activity
+package kh.edu.rupp.quiz1.activity
 
+import android.annotation.SuppressLint
+import android.app.ProgressDialog
 import android.os.Bundle
-import android.util.Log
-import android.widget.Toast
+import androidx.activity.viewModels
+import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
+import androidx.lifecycle.Observer
 import com.squareup.picasso.Picasso
-import kh.edu.rupp.quiz1.api.ApiService
 import kh.edu.rupp.quiz1.databinding.ActivityMainBinding
 import kh.edu.rupp.quiz1.model.ProfileModel
-import retrofit2.Call
-import retrofit2.Callback
-import retrofit2.Response
-import retrofit2.Retrofit
-import retrofit2.converter.gson.GsonConverterFactory
-import retrofit2.create
+import kh.edu.rupp.quiz1.model.UiStateStatus
+import kh.edu.rupp.quiz1.viewmodel.MainViewModel
 
 class MainActivity : AppCompatActivity() {
     private var _binding: ActivityMainBinding? = null
     private val binding get() = _binding!!
+    private val viewModel: MainViewModel by viewModels()
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         _binding = ActivityMainBinding.inflate(layoutInflater)
         setContentView(binding.root)
 
-        val retrofit = Retrofit.Builder()
-            .baseUrl("https://smlp-pub.s3.ap-southeast-1.amazonaws.com/api/")
-            .addConverterFactory(GsonConverterFactory.create())
-            .build()
+        // Observe the UI state
+        viewModel.profileModelUiState.observe(this, Observer { uiState ->
+            when (uiState.status) {
+                UiStateStatus.loading -> {
+                    // Show loading state
 
-        val apiService: ApiService = retrofit.create<ApiService>()
+                    // You can show a progress bar or any loading indicator here
+                }
+                UiStateStatus.success -> {
 
-        apiService.loadProfile().enqueue(object : Callback<ProfileModel> {
-            override fun onResponse(call: Call<ProfileModel>, response: Response<ProfileModel>) {
-                displayProfile(response.body())
-            }
+                    // Data loaded successfully, update UI
+                    displayProfile(uiState.data)
+                }
+                UiStateStatus.error -> {
+                    // Handle error state
 
-            override fun onFailure(call: Call<ProfileModel>, t: Throwable) {
+                    // You can show an error message or retry option here
 
+                }
             }
         })
+
+        // Load profile data
+        viewModel.loadProfileModel()
     }
 
+    @SuppressLint("SetTextI18n")
     private fun displayProfile(profileModel: ProfileModel?) {
-        Picasso.get().load(profileModel?.getData()?.profileImage).into(binding.imgProfile)
-        Picasso.get().load(profileModel?.getData()?.coverImage).into(binding.imgBackground)
-        binding.txtBio.setText(profileModel?.getData()?.bio)
-        binding.txtJob.setText(profileModel?.getData()?.job)
-        binding.txtFriendNumber.setText(profileModel?.getData()?.friendCount.toString() + " friends")
-        binding.txtWorkplace.setText(profileModel?.getData()?.workPlace)
-        binding.txtMaritalStatus.setText(profileModel?.getData()?.maritalStatus)
-        binding.txtTopBar.setText(profileModel?.getData()?.firstName + " " + profileModel?.getData()?.lastName)
-        binding.txtProfileName.setText(profileModel?.getData()?.firstName + " " + profileModel?.getData()?.lastName)
+        Picasso.get().load(profileModel?.data?.profileImage).into(binding.imgProfile)
+        Picasso.get().load(profileModel?.data?.coverImage).into(binding.imgBackground)
+        binding.txtBio.text = profileModel?.data?.bio
+        binding.txtJob.text = profileModel?.data?.job
+        binding.txtFriendNumber.text = "${profileModel?.data?.friendCount} friends"
+        binding.txtWorkplace.text = profileModel?.data?.workPlace
+        binding.txtMaritalStatus.text = profileModel?.data?.maritalStatus
+        binding.txtTopBar.text = "${profileModel?.data?.firstName} ${profileModel?.data?.lastName}"
+        binding.txtProfileName.text = "${profileModel?.data?.firstName} ${profileModel?.data?.lastName}"
     }
 
+    override fun onDestroy() {
+        super.onDestroy()
+        _binding = null
+    }
 }
